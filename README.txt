@@ -50,15 +50,17 @@ Users will need to ensure the following:
 
 5. It is highly recommended that DB Browser for SQLite is also used to manage the files in the sqlite database
 
-6. Run app.py in command prompt using the following Windows commands:
-   Copy and paste the current filepath of your current directory e.g. cd "C:\Users\joshi\Documents\Project\Coding\Streamlit_App" 
-   Then press Enter
-   Activate the virtual environment by copying and pasting this command into the command prompt: .\venv\Scripts\Activate
-   Then press Enter
-   Type in 'streamlit run app.py' and press enter; the script will be executed and the web app will be launched. 
 
 
+If running app.py in command prompt, then use the following Windows commands:
+Copy and paste the current filepath of your current directory e.g. cd "C:\Users\joshi\Documents\Project\Coding\Streamlit_App" 
+Then press Enter
+Activate the virtual environment by copying and pasting this command into the command prompt: .\venv\Scripts\Activate
+Then press Enter
+Type in 'streamlit run app.py' and press enter; the script will be executed and the web app will be launched. 
 
+
+Or you can now launch the deployed version of the streamlit app at: https://proteospark.streamlit.app/
 
 
 
