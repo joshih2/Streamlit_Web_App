@@ -1,7 +1,7 @@
 ###########################
 # F333290 - H.Joshi        #
 # Date Created: 29/07/2024 #
-# Last Updated: 13/08/2024 #
+# Last Updated: 17/08/2024 #
 ###########################
 
 '''
@@ -29,6 +29,15 @@ df (pandas.DataFrame): contains the retrieved data from a data table
 import streamlit as st
 import sqlite3
 import pandas as pd
+import os
+
+# Defining the database directory which stores the sqlite db
+sqlite_db_path = "database/peptideshaker_reports.db"
+database_filepath = "database"
+
+# Ensuring that the database directory exists
+if not os.path.exists(database_filepath):
+    os.makedirs(database_filepath)
 
 
 def save_tables_to_db(table_name, df):
@@ -39,7 +48,7 @@ def save_tables_to_db(table_name, df):
     table_name (str): name of the data table
     df (pandas.DataFrame): to be saved to the data table
     '''
-    connection = sqlite3.connect("peptideshaker_reports.db", check_same_thread = False)
+    connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
     df.to_sql(table_name, connection, if_exists = "replace", index = False)
     connection.close()
 
@@ -54,7 +63,7 @@ def retrieve_tables_from_db(table_name):
     Returns:
     df (pandas.DataFrame): contains the retrieved data from a data table 
     '''
-    connection = sqlite3.connect("peptideshaker_reports.db", check_same_thread = False)
+    connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
     df = pd.read_sql(f"SELECT * FROM {table_name}", connection)
     connection.close()
     return df
@@ -66,7 +75,7 @@ def retrieve_table_names():
     Returns:
      list of str: list of data table names
     '''
-    connection = sqlite3.connect("peptideshaker_reports.db", check_same_thread = False)
+    connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
     cursor = connection.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type ='table';")
     tables = cursor.fetchall()
@@ -95,9 +104,10 @@ def third_page():
                      separately into the assigned file uploaders in the sidebar. 
                      The file uploaders will only be able to accept one Excel file at a time.
                      The uploaded files will be saved to a sqlite database. 
-                     Once saved to the sqlite database, the Description dropdown menu will automatically populate with the descriptions of proteins.
-
-                    Note: If these two PeptideShaker reports were previously uploaded on page 2, then there is no need to re-upload them here again.
+                     
+                     Note: Please refresh the page and you will see that the Description dropdown menu will automatically populate with the descriptions of proteins.
+                     
+                     Note: If these two PeptideShaker reports were previously uploaded on page 2, then there is no need to re-upload them here again.
                      As the reports aready exist in the sqlite database, you will need to select the Protein and PSM report filenames 
                      manually from the dropdown menu and then only will the Description dropdown menu will be populated. 
 
@@ -108,7 +118,11 @@ def third_page():
                      retrieved from both the Default Protein & PSM Report.
 
                      You will able to save the retrieved Default PSM Report by clicking on the 'Download As CSV' toggle at the top of the specified table. 
-                     This .csv file can then be uploaded for the raw & processed chromatogram analysis on page 4.             
+                     This .csv file can then be uploaded for the raw & processed chromatogram analysis on page 4.  
+
+                     Note: If you need to delete an uploaded PeptideShaker report here on page 3, please go back to page 2 and 
+                     follow the instructions in the information tab to learn more this process. The selected table marked for
+                     deletion on page 2 will reflect on page 3 as the table will be removed from the sqlite database.            
                 """)
             
  
@@ -120,7 +134,7 @@ def third_page():
     psm_excel_report = st.sidebar.file_uploader("PeptideShaker Default PSM Report", type = ["xlsx"], accept_multiple_files = False)
     
     # Connecting the the sqlite database for table name and data retrieval
-    connection = sqlite3.connect("peptideshaker_reports.db", check_same_thread = False)
+    connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
 
     # Checking for and processing the uploaded Default Protein Report
     if protein_excel_report:

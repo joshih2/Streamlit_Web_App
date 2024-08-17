@@ -1,7 +1,7 @@
 ###########################
 # F333290 - H.Joshi        #
 # Date Created: 29/07/2024 #
-# Last Updated: 13/08/2024 #
+# Last Updated: 17/08/2024 #
 ###########################
 
 '''
@@ -66,6 +66,10 @@ def home_page():
                 
         Users will be able to download and save any of the tables as .csv files and visualisations as static .png files. 
         If they make any changes to the visualisations using the interactive features, then these changes can also be saved.  
+                    
+        Note: If users need to delete a uploaded table from the sqlite database on page 2 or page 3, they will be able to 
+        do so on page 2. Please follow the instructions in the information tab on page 2 to learn more about the table deletion process. 
+        Deleted tables will be removed from the sqlite database and so will not be able to be retrieved for analysis on page 2 and 3.  
                     
                                 
         2. **Protein-Peptides-PSMs Data Retrieval Form (page 3):**

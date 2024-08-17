@@ -1,7 +1,7 @@
 ###########################
 # F333290 - H.Joshi        #
 # Date Created: 29/07/2024 #
-# Last Updated: 11/08/2024 #
+# Last Updated: 17/08/2024 #
 ###########################
 
 '''
@@ -14,6 +14,7 @@ Please refer to app.py for a detailed description of this module.
 Functions: 
 def save_tables_to_db(table_name, df) - saving dataframe to a sqlite table in the database 
 def retrieve_tables_from_db(table_name) - retrieving and storing data to a dataframe from sqlite tables
+def delete_tables_from_db(table_name) - delating sqlite tables one at a time from within the web app 
 def second_page() - displaying the Interactive Data Tables page within the streamlit web app 
 
 Parameters:
@@ -29,6 +30,15 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import plotly.express as px
+import os
+
+# Defining the database directory which stores the sqlite db
+sqlite_db_path = "database/peptideshaker_reports.db"
+database_filepath = "database"
+
+# Ensuring that the database directory exists
+if not os.path.exists(database_filepath):
+    os.makedirs(database_filepath)
 
 
 def save_tables_to_db(table_name, df):
@@ -39,7 +49,7 @@ def save_tables_to_db(table_name, df):
     table_name (str): name of the data table
     df (pandas.DataFrame): to be saved to the data table
     '''
-    connection = sqlite3.connect("peptideshaker_reports.db", check_same_thread = False)
+    connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
     df.to_sql(table_name, connection, if_exists = "replace", index = False)
     connection.close()
 
@@ -54,10 +64,27 @@ def retrieve_tables_from_db(table_name):
     Returns:
     df (pandas.DataFrame): contains the retrieved data from a data table 
     '''
-    connection = sqlite3.connect("peptideshaker_reports.db", check_same_thread = False)
+    connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
     df = pd.read_sql(f"SELECT * FROM {table_name}", connection)
     connection.close()
     return df
+
+
+def delete_tables_from_db(table_name):
+    '''
+    Function for the user to delete tables one at a time from the sqlite database within the web app without writing any sqlite commands. 
+
+    The changes are then reflected in the peptideshaker_reports.db. 
+
+    Parameter:
+    table_name (str): name of the data table 
+
+    '''
+    connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
+    cursor = connection.cursor()
+    cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+    connection.commit()
+    connection.close()
 
 
 def second_page():
@@ -67,8 +94,14 @@ def second_page():
     Users will be able to upload multiple Excel files which will be saved to the sqlite database. 
     They will be able to conduct basic cleaning and manipulation of the data, calculate column counts and percentages 
     and create pie charts and heatmaps on the cleaned processed data. 
+
+    They will also be able to connect to the sqlite database to remove any data tables one at a time from the sqlite database. 
     '''
     st.title("Interactive Data Tables")
+
+     # Establishing session state for deleted_table process 
+    if "deleted_table" not in st.session_state:
+        st.session_state.deleted_table = False
 
     with st.expander("### ℹ️ Information"):
             st.write("""
@@ -90,12 +123,20 @@ def second_page():
                      and subsequent statistics and visualisations.
                      
                      Note: The files that have been uploaded into the sqlite database will not be updated by any changes made.
-                    The updates to the tables are for data analysis and visualisation purposes. 
-                """)
-    
+                     The updates to the tables are for data analysis and visualisation purposes. 
+                     
+                     Note: To delete any uploaded files on this page, please select the table name from the pre-populated dropdown menu
+                     below the information tab. Then a delete button will appear and once clicked, the selected table will be removed
+                     from the sqlite database. The dropdown menu for deleting table(s) will only appear if you have uploaded a file into the web app. 
+                     Only one table can be deleted at a time from the dropdown menu. 
 
-    # Creating a widget for users to upload multiple Excel files
-    excel_tables = st.file_uploader("Please upload the PeptideShaker Reports here", type = ["xlsx"], accept_multiple_files = True)
+                """)
+   
+
+    st.sidebar.subheader("Please upload the PeptideShaker Reports here")
+   
+    # Creating a sidebar widget for users to upload multiple Excel files
+    excel_tables = st.sidebar.file_uploader("This file uploader can accept multiple file uploads", type = ["xlsx"], accept_multiple_files = True)
 
     # Checking for and processing uploaded '.xlsx' files
     if excel_tables:
@@ -107,16 +148,54 @@ def second_page():
             # Saving the dataframe and the updated table_name to the peptideshaker_reports.db 
             save_tables_to_db(table_name, df)
             st.write(f"Table: {table_name} has been successfully saved to the sqlite database.")
-
+        # Creating a session state flag to indicate if a table has been deleted 
+        st.session_state.deleted_table = True  
 
     # Connecting to the sqlite database to query and retrieve all table names
-    connection = sqlite3.connect("peptideshaker_reports.db", check_same_thread = False)
+    connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
     cursor = connection.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type = 'table';")
     tables = cursor.fetchall()
     # Closing the connection once finished querying 
     connection.close()
-    
+
+    # Checking whether there are any tables in the database
+    if tables:
+        # If tables are found, then table names are extracted from a tuple of tables
+        table_names = [table[0] for table in tables]
+        
+        # Creating a selectbox widget for deleting tables one at a time
+        selected_table = st.selectbox("If required, please select a table to delete from the sqlite database", options = ["Select one table at a time for deletion"] + table_names)
+
+        # Checking if a table name has been selected and the delete button has been clicked by the user
+        if selected_table != "Select a table" and st.button("Delete the selected table"):
+            # Removing the selected data table from the sqlite database
+            delete_tables_from_db(selected_table)
+            st.success(f"Table: {selected_table} has been successfully deleted from the sqlite database.")
+            # Creating a session state flag to indicate that a table has been deleted 
+            st.session_state.deleted_table = True  
+
+    # If the table has been deleted, then the session state flag is removed and the data is refreshed
+    if st.session_state.deleted_table:
+        st.session_state.deleted_table = False
+        with st.spinner("Refreshing the page with user updates to the sqlite database..."):
+            # Connecting to the sqlite database to fetch and display the tables after the user has deleted table(s)
+            connection = sqlite3.connect(sqlite_db_path, check_same_thread = False)
+            cursor = connection.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type ='table';")
+            tables = cursor.fetchall()
+            # Closing the connection once finished querying 
+            connection.close()
+            
+            # If tables are found, then the table names are extracted from the tuple and retrieved from the sqlite database 
+            if tables:
+                for table_name in tables:
+                    table_name = table_name[0]
+                    df = retrieve_tables_from_db(table_name)
+            # If no tables are found in the database after deletion, then a warning message is logged
+            else:
+                st.warning("No tables in the sqlite database can be found. Please upload PeptideShaker Reports to start your data analysis.")
+
     # For loop for iterating through each table_name 
     for table_name in tables:
         table_name = table_name[0]
