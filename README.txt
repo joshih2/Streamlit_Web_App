@@ -27,7 +27,7 @@ PeptideShaker
 (ProteoSpark)
 
 In this project, there is a folder called Streamlit_App.
-It contains the following: venv, __pycache__ , requirements.txt, peptideshaker_reports.db, python modules, app.py and a README file.
+It contains the following: venv, __pycache__ , requirements.txt, database directory (contains peptideshaker_reports.db), python modules, app.py and a README file.
 
 There are four modules that have been created:
  - home_page.py
@@ -44,7 +44,7 @@ Users will need to ensure the following:
 
 2. A sqlite database has been created - this code already comes with peptideshaker_reports.db as the default
 
-3. PeptideShaker Reports have been exported and saved as Excel files to then upload into the web app 
+3. PeptideShaker Reports have been exported and saved as Excel files ('.xlsx') to then upload into the web app 
 
 4. Raw and Processed .mzML files that can be uploaded to the web app 
 
